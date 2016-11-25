@@ -49,7 +49,7 @@ branch = ENV["BITRISE_GIT_BRANCH"]
 matches = /:([^\/]*)\//.match ENV["GIT_REPOSITORY_URL"]
 repo_base = matches[1]
 repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
-pull_number = ENV["BITRISE_PULL_REQUEST"]
+pull_id = ENV["BITRISE_PULL_REQUEST"]
 authorization_token = ENV["auth_token"]
 if authorization_token.to_s.empty?
   puts "No authorization_token specified"
@@ -63,9 +63,9 @@ end
 
 client = Octokit::Client.new access_token:authorization_token
 
-comments =client.issue_comments repo , pull_number
+comments =client.issue_comments repo , pull_id
 if comments.one? {|p| p.body.include? "code review OK"}
-  client.merge_pull_request repo, pull_number
+  client.merge_pull_request repo, pull_id
   log_done "#{branch} merged"
   export_output "BITRISE_AUTO_MERGE_INFO", "#{branch} merged"
   client.delete_ref branch if ENV["BITRISEIO_PULL_REQUEST_REPOSITORY_URL"].contains? repo_base
