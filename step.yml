@@ -30,7 +30,7 @@ is_skippable: true
 deps:
 run_if: ""
 inputs:
-  - auth_token:
+  - AUTH_TOKEN: $auth_token
     opts:
       title: "API token"
       summary:
