@@ -1,4 +1,4 @@
-title: "STEP TEMPLATE"
+title: "Github autoMerge"
 summary: A short summary of the step. Don't make it too long ;)
 description: |-
   This is a Step template.
@@ -24,22 +24,16 @@ project_type_tags:
   - xamarin
 type_tags:
   - script
-is_requires_admin_user: true
+is_requires_admin_user: false
 is_always_run: false
-is_skippable: false
+is_skippable: true
 deps:
-  brew:
-  - name: git
-  - name: wget
-  apt_get:
-  - name: git
-  - name: wget
 run_if: ""
 inputs:
-  - example_step_input: Default Value - you can leave this empty if you want to
+  - auth_token:
     opts:
-      title: "Example Step Input"
-      summary: Summary. No more than 2-3 sentences.
+      title: "API token"
+      summary:
       description: |
         Description of this input.
 
@@ -48,10 +42,10 @@ inputs:
       is_required: true
       value_options: []
 outputs:
-  - EXAMPLE_STEP_OUTPUT:
+  - BITRISE_AUTO_MERGE_INFO:
     opts:
       title: "Example Step Output"
-      summary: Summary. No more than 2-3 sentences.
+      summary: feedback when th PR is merged.
       description: |
         Description of this output.
 
