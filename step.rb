@@ -64,7 +64,10 @@ end
 client = Octokit::Client.new access_token:authorization_token
 
 comments =client.issue_comments repo , pull_id
-if comments.one? {|p| p.body.include? "code review OK"}
+if comments.one? do |p| 
+   log_info p.body
+   p.body.downcase include? "code review ok"
+ end
   client.merge_pull_request repo, pull_id
   log_done "#{branch} merged"
   export_output "BITRISE_AUTO_MERGE_INFO", "#{branch} merged"
