@@ -40,10 +40,6 @@ def export_output(out_key, out_value)
     f.close_write
     f.read
   }
-  while !process.eof?
-    line = process.gets
-    puts "GOT: #{line}"
-  end
 end
 
 def delete_branch? host
