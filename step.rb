@@ -86,56 +86,28 @@ def inWIP title
   end
 end
 
+log_info "init PR"
+
 branch = ENV["BITRISE_GIT_BRANCH"]
 dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
+
+
 matches = /:([^\/]*)\//.match ENV["GIT_REPOSITORY_URL"]
 
 repo_base = matches[1]
 repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
-pull_id = ENV["PULL_REQUEST_ID"]
+
 authorization_token = ENV["auth_token"]
 
+log_fail "No branch source specified" if branch.to_s.empty?
+
+log_fail "No branch dest specified" if dest.to_s.empty?
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
-log_fail "No pull request specified" if pull_id.to_s.empty?
+
 
 client = Octokit::Client.new access_token:authorization_token
-pr = client.pull_request repo, pull_id
-@author = pr.user.login 
-comments = client.issue_comments repo , pull_id
-comments.push(pr) if comments.empty?
-reviews = client.pull_request_reviews repo, pull_id
-log_info "reviewed :#{ reviewed? reviews, comments}"
-log_info "reviewers:#{reviewers(reviews)}"
-options = {}
-pr = client.pull_request repo, pull_id
-inWIP(pr.title)
-
-if reviewedComments? comments
-
-  options[:merge_method] = "rebase" if pr.title.include? "bump version" 
-end
-  
-if reviewed?(reviews, comments)
-  #begin
-  log_details "#{repo}, #{pull_id}  #{options}"
-  resultMerge = client.merge_pull_request repo, pull_id ,'', options
-  log_done "#{branch} merged #{options[:merge_method]}"
-  export_output "BITRISE_AUTO_MERGE", "True"
-  log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_branch repo, branch if delete_branch? repo_base
-  log_info("#{dest} => #{resultMerge.merge}")
-  if dest == "release" && resultMerge.merged?
-    new_branch = "feat/reportRelease"
-    client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
-  end
-  # rescue Octokit::MethodNotAllowed
-  #  client.merge repo, branch, dest, :merge_method => "rebase" 
-  #end
-else
-  missings = missing_reviewers reviews
-  exit(0) if missings.empty?
-  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de #{m}"}
-end
+pr = client.create_pull_request repo, branch, dest, "bump version", ""
+log_fail "Pull request error" if pr.nil?
+client.add_comment repo, pr.number, "code review OK"
 
 log_done "done"
