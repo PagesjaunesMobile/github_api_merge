@@ -72,7 +72,7 @@ if reviewed? comments
   log_done "#{branch} merged"
   export_output "BITRISE_AUTO_MERGE", "True"
   log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_ref branch if delete_branch? repo_base
+  client.delete_branch repo, branch if delete_branch? repo_base
 end
 
   log_done "done"
