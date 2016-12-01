@@ -35,7 +35,7 @@ def log_done(message)
 end
 
 def export_output(out_key, out_value)
- IO.popen("envman add --key #{out_key.to_s}", 'r+') { |f|
+  IO.popen("envman add --key #{out_key.to_s}", 'r+') { |f|
     f.write(out_value.to_s)
     f.close_write
     f.read
@@ -58,21 +58,23 @@ repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
 pull_id = ENV["BITRISE_PULL_REQUEST"]
 authorization_token = ENV["auth_token"]
 
-  log_fail "No authorization_token specified" if authorization_token.to_s.empty?
-
-  log_fail "No pull request specified" if pull_id.to_s.empty?
+log_fail "No authorization_token specified" if authorization_token.to_s.empty?
+log_fail "No pull request specified" if pull_id.to_s.empty?
 
 client = Octokit::Client.new access_token:authorization_token
-
 comments = client.issue_comments repo , pull_id
-
 log_info "reviewed :#{ reviewed? comments}"
+
 if reviewed? comments
-  client.merge_pull_request repo, pull_id 
-  log_done "#{branch} merged"
+  pr = client.pull_request repo, pull_id
+  options = {}
+  options[:merge_method] = "rebase" if pr.title.include? "bump version" 
+  
+  client.merge_pull_request repo, pull_id ,'', options
+  log_done "#{branch} merged #{options[:merge_method]}"
   export_output "BITRISE_AUTO_MERGE", "True"
   log_info "deleted :#{delete_branch? repo_base}"
   client.delete_branch repo, branch if delete_branch? repo_base
 end
 
-  log_done "done"
+log_done "done"
