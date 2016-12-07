@@ -10,3 +10,4 @@ workflows:
         inputs:
         - reviewed_key: code review ok
         - auth_token: <TOKEN>
+        - delete_branch: true

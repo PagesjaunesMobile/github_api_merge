@@ -32,7 +32,7 @@ def export_output(out_key, out_value)
 end
 
 def delete_branch?(host)
-  ENV["BITRISEIO_PULL_REQUEST_REPOSITORY_URL"].include? host
+  ENV["delete_branch"] == "true" and ENV["BITRISEIO_PULL_REQUEST_REPOSITORY_URL"].include? host
 end
 
 def reviewed?(key, comments)
@@ -64,8 +64,8 @@ if reviewed
   client.merge_pull_request repo, pull_id
   log_done "#{branch} merged"
   export_output "BITRISE_AUTO_MERGE", "True"
-  #log_info "deleted :#{delete_branch? repo_base}"
-  #client.delete_branch repo, branch if delete_branch? repo_base
+  log_info "deleted :#{delete_branch? repo_base}"
+  client.delete_branch repo, branch if delete_branch? repo_base
 end
 
   log_done "done"

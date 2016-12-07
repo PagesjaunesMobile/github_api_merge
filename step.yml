@@ -37,6 +37,10 @@ inputs:
     opts:
       title: "Reviewed Comment Key"
       is_required: false
+  - delete_branch:
+    opts:
+      title: "Delete branch after merge if on base repo"
+      is_required: false
 outputs:
   - BITRISE_AUTO_MERGE:
     opts:
