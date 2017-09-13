@@ -46,16 +46,43 @@ def delete_branch? host
   ENV["BITRISEIO_PULL_REQUEST_REPOSITORY_URL"].include? host
 end
  
-def reviewed? comments
+def reviewedComments? comments
   comments.one? {|p| p.body.downcase.include? 'code review ok'}
 end
 
+def reviewers reviews
+  revs ={}
+  reviews.map{|r|
+    revs[r.user.login] = r.state == "APPROVED"
+  }
+  
+  revs.delete "PJThor"
+  revs
+end
+def reviewed? reviews
+  revs = reviewers reviews
+  revs.values.all?{|r| r}
+end
+
+def missing_reviewers reviews
+  missing = []
+  revs = reviewers reviews
+  begin
+    miss = revs.key(false)
+    revs.delete(miss)
+    missing.push miss
+  end while revs.key(false)
+  missing
+end
+
+
 log_info "init Merge"
 branch = ENV["BITRISE_GIT_BRANCH"]
+dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
 matches = /:([^\/]*)\//.match ENV["GIT_REPOSITORY_URL"]
 repo_base = matches[1]
 repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
-pull_id = ENV["BITRISE_PULL_REQUEST"]
+pull_id = ENV["PULL_REQUEST_ID"]
 authorization_token = ENV["auth_token"]
 
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
@@ -63,18 +90,30 @@ log_fail "No pull request specified" if pull_id.to_s.empty?
 
 client = Octokit::Client.new access_token:authorization_token
 comments = client.issue_comments repo , pull_id
-log_info "reviewed :#{ reviewed? comments}"
+reviews = client.pull_request_reviews repo, pull_id
+log_info "reviewed :#{ reviewed? reviews}"
 
-if reviewed? comments
+options = {}
+
+if reviewedComments? comments
   pr = client.pull_request repo, pull_id
-  options = {}
   options[:merge_method] = "rebase" if pr.title.include? "bump version" 
+end
   
-  client.merge_pull_request repo, pull_id ,'', options
-  log_done "#{branch} merged #{options[:merge_method]}"
-  export_output "BITRISE_AUTO_MERGE", "True"
-  log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_branch repo, branch if delete_branch? repo_base
+if reviewed? reviews
+  begin
+    log_details "#{repo}, #{pull_id}  #{options}"
+    client.merge_pull_request repo, pull_id ,'', options
+    log_done "#{branch} merged #{options[:merge_method]}"
+    export_output "BITRISE_AUTO_MERGE", "True"
+    log_info "deleted :#{delete_branch? repo_base}"
+    client.delete_branch repo, branch if delete_branch? repo_base
+  rescue Octokit::MethodNotAllowed
+    client.merge repo, branch, dest, :merge_method => "rebase" 
+  end
+else
+  missings = missing_reviewers reviews
+  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de #{m}"}
 end
 
 log_done "done"

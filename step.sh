@@ -3,6 +3,8 @@
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 set -e
-gem install octokit
-ruby "$THIS_SCRIPT_DIR/step.rb"
+ls -l
+
+cd $THIS_SCRIPT_DIR && bundle install
+bundle exec ruby "$THIS_SCRIPT_DIR/step.rb"
 exit $?
