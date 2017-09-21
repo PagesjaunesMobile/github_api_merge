@@ -56,11 +56,13 @@ def reviewers reviews
     revs[r.user.login] = r.state == "APPROVED"
   }
   
+  revs.delete ENV["GIT_CLONE_COMMIT_AUTHOR_NAME"]
   revs.delete "PJThor"
   revs
 end
 def reviewed? reviews, comments
   revs = reviewers reviews
+  return false if revs.empty?
   revs.values.all?{|r| r} || reviewedComments?(comments)
 end
 
@@ -82,10 +84,10 @@ def inWIP title
   end
 end
 
-log_info "init Merge"
 branch = ENV["BITRISE_GIT_BRANCH"]
 dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
 matches = /:([^\/]*)\//.match ENV["GIT_REPOSITORY_URL"]
+
 repo_base = matches[1]
 repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
 pull_id = ENV["PULL_REQUEST_ID"]
@@ -98,7 +100,7 @@ client = Octokit::Client.new access_token:authorization_token
 comments = client.issue_comments repo , pull_id
 reviews = client.pull_request_reviews repo, pull_id
 log_info "reviewed :#{ reviewed? reviews, comments}"
-
+log_info "reviewers:#{reviewers(reviews)}"
 options = {}
 pr = client.pull_request repo, pull_id
 inWIP(pr.title)
