@@ -59,9 +59,9 @@ def reviewers reviews
   revs.delete "PJThor"
   revs
 end
-def reviewed? reviews
+def reviewed? reviews, comments
   revs = reviewers reviews
-  revs.values.all?{|r| r}
+  revs.values.all?{|r| r} || reviewedComments?(comments)
 end
 
 def missing_reviewers reviews
@@ -75,6 +75,12 @@ def missing_reviewers reviews
   missing
 end
 
+def inWIP title
+  if title.downcase.include? "wip"
+    log_info "Abort : WIP mode detected"
+    exit(0)
+  end
+end
 
 log_info "init Merge"
 branch = ENV["BITRISE_GIT_BRANCH"]
@@ -91,16 +97,18 @@ log_fail "No pull request specified" if pull_id.to_s.empty?
 client = Octokit::Client.new access_token:authorization_token
 comments = client.issue_comments repo , pull_id
 reviews = client.pull_request_reviews repo, pull_id
-log_info "reviewed :#{ reviewed? reviews}"
+log_info "reviewed :#{ reviewed? reviews, comments}"
 
 options = {}
+pr = client.pull_request repo, pull_id
+inWIP(pr.title)
 
 if reviewedComments? comments
-  pr = client.pull_request repo, pull_id
+
   options[:merge_method] = "rebase" if pr.title.include? "bump version" 
 end
   
-if reviewed? reviews
+if reviewed?(reviews, comments)
   begin
     log_details "#{repo}, #{pull_id}  #{options}"
     client.merge_pull_request repo, pull_id ,'', options
