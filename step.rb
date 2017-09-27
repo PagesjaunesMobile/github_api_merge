@@ -123,6 +123,7 @@ if reviewed?(reviews, comments)
   end
 else
   missings = missing_reviewers reviews
+  exit(0) if missings.empty?
   missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de #{m}"}
 end
 
