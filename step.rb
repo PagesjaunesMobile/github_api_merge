@@ -69,6 +69,8 @@ end
 def missing_reviewers reviews
   missing = []
   revs = reviewers reviews
+  return missing if revs.empty?
+  
   begin
     miss = revs.key(false)
     revs.delete(miss)
