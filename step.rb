@@ -120,6 +120,8 @@ if reviewed?(reviews, comments)
     export_output "BITRISE_AUTO_MERGE", "True"
     log_info "deleted :#{delete_branch? repo_base}"
     client.delete_branch repo, branch if delete_branch? repo_base
+    if dest == "release"
+      client.create_pull_request repo, "develop", "release", "chore(fix): report fixes",ENV["BITRISE_GIT_MESSAGE"]
   rescue Octokit::MethodNotAllowed
     client.merge repo, branch, dest, :merge_method => "rebase" 
   end
