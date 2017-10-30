@@ -120,7 +120,7 @@ if reviewed?(reviews, comments)
     export_output "BITRISE_AUTO_MERGE", "True"
     log_info "deleted :#{delete_branch? repo_base}"
     client.delete_branch repo, branch if delete_branch? repo_base
-    log_info("#{dest}, #{resultMerge.merged}")
+    log_info("#{dest} => #{resultMerge}")
     if dest == "release" && resultMerge.merged?
       new_branch = "heads/feat/reportRelease_#{pull_id}"
       client.create_ref repo, new_branch, resultMerge.sha
