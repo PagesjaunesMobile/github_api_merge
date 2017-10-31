@@ -62,8 +62,8 @@ def reviewers reviews
 end
 def reviewed? reviews, comments
   revs = reviewers reviews
-  return false if revs.empty?
-  revs.values.all?{|r| r} || reviewedComments?(comments)
+  return reviewedComments?(comments) if revs.empty?
+  revs.values.all?{|r| r}
 end
 
 def missing_reviewers reviews
