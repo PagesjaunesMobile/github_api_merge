@@ -102,7 +102,7 @@ client = Octokit::Client.new access_token:authorization_token
 pr = client.pull_request repo, pull_id
 @author = pr.user.login 
 comments = client.issue_comments repo , pull_id
-comments.push pr.body if comments.empty?
+comments.push {body: pr.body} if comments.empty?
 reviews = client.pull_request_reviews repo, pull_id
 log_info "reviewed :#{ reviewed? reviews, comments}"
 log_info "reviewers:#{reviewers(reviews)}"
