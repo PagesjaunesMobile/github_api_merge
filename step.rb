@@ -56,7 +56,7 @@ def reviewers reviews
     revs[r.user.login] = r.state == "APPROVED"
   }
   
-  revs.delete ENV["GIT_CLONE_COMMIT_AUTHOR_NAME"]
+  revs.delete @author
   revs.delete "PJThor"
   revs
 end
@@ -99,7 +99,10 @@ log_fail "No authorization_token specified" if authorization_token.to_s.empty?
 log_fail "No pull request specified" if pull_id.to_s.empty?
 
 client = Octokit::Client.new access_token:authorization_token
+pr = client.pull_request repo, pull_id
+@author = pr.user.login 
 comments = client.issue_comments repo , pull_id
+comments.push pr.body if comments.empty?
 reviews = client.pull_request_reviews repo, pull_id
 log_info "reviewed :#{ reviewed? reviews, comments}"
 log_info "reviewers:#{reviewers(reviews)}"
@@ -122,7 +125,7 @@ if reviewed?(reviews, comments)
   client.delete_branch repo, branch if delete_branch? repo_base
   log_info("#{dest} => #{resultMerge.merge}")
   if dest == "release" && resultMerge.merged?
-    new_branch = "feat/reportRelease_#{pull_id}"
+    new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
     client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
   end
