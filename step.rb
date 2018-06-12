@@ -135,7 +135,7 @@ if reviewed?(reviews, comments)
 else
   missings = missing_reviewers reviews
   exit(0) if missings.empty?
-  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de #{m}"}
+  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
 end
 
 log_done "done"
