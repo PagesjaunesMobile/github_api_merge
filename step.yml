@@ -29,7 +29,7 @@ is_always_run: false
 is_skippable: true
 run_if: .IsCI
 inputs:
-  - auth_token:
+  - AUTH_TOKEN: $auth_token
     opts:
       title: "API token"
       is_required: true

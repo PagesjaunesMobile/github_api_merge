@@ -46,29 +46,34 @@ def delete_branch? host
   ENV["BITRISEIO_PULL_REQUEST_REPOSITORY_URL"].include? host
 end
  
-def reviewedComments? comments
-  comments.one? {|p| p.body.downcase.include? 'code review ok'}
+def reviewedComments? comments, last
+  comment = comments.one? {|p| (p.updated_at > last) && p.body.downcase.include?('code review ok') }
 end
 
-def reviewers reviews
+def reviewers reviews, last
   revs ={}
   reviews.map{|r|
-    revs[r.user.login] = r.state == "APPROVED"
+    revs[r.user.login] = r.state == "APPROVED" && r.submitted_at > last
   }
   
   revs.delete @author
   revs.delete "PJThor"
   revs
 end
-def reviewed? reviews, comments
-  revs = reviewers reviews
-  return reviewedComments?(comments) if revs.empty?
+
+def last_commit commits
+   commits.map {|x| x.commit.author.date}.max
+end
+ 
+def reviewed? reviews, comments, last
+  revs = reviewers reviews, last
+  return reviewedComments?(comments, last) if revs.empty?
   revs.values.all?{|r| r}
 end
 
-def missing_reviewers reviews
+def missing_reviewers reviews, last
   missing = []
-  revs = reviewers reviews
+  revs = reviewers reviews, last
   return missing if revs.empty?
   
   begin
@@ -103,19 +108,22 @@ pr = client.pull_request repo, pull_id
 @author = pr.user.login 
 comments = client.issue_comments repo , pull_id
 comments.push(pr) if comments.empty?
+
+commits = client.pull_request_commits repo, pull_id
+lastCommit = last_commit(commits)
 reviews = client.pull_request_reviews repo, pull_id
-log_info "reviewed :#{ reviewed? reviews, comments}"
-log_info "reviewers:#{reviewers(reviews)}"
+log_info "reviewed :#{ reviewed? reviews, comments, lastCommit}"
+log_info "reviewers:#{reviewers(reviews, lastCommit)}"
 options = {}
 pr = client.pull_request repo, pull_id
 inWIP(pr.title)
 
-if reviewedComments? comments
+if reviewedComments? comments, lastCommit
 
   options[:merge_method] = "rebase" if pr.title.include? "bump version" 
 end
   
-if reviewed?(reviews, comments)
+if reviewed?(reviews, comments, lastCommit)
   #begin
   log_details "#{repo}, #{pull_id}  #{options}"
   resultMerge = client.merge_pull_request repo, pull_id ,'', options
@@ -133,7 +141,7 @@ if reviewed?(reviews, comments)
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
   #end
 else
-  missings = missing_reviewers reviews
+  missings = missing_reviewers reviews, lastCommit
   exit(0) if missings.empty?
   missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
 end

@@ -1,3 +1,3 @@
 source 'https://rubygems.org'
 
-gem 'octokit', :git => "https://github.com/octokit/octokit.rb.git", :branch => "master"
+gem 'octokit', '~> 4.9'
