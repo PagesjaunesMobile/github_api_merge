@@ -71,8 +71,7 @@ def reviewed? reviews, comments, last
   revs.values.all?{|r| r}
 end
 
-def missing_reviewers reviews, last
-  missing = []
+def missing_reviewers missing, reviews, last
   revs = reviewers reviews, last
   return missing if revs.empty?
   
@@ -141,7 +140,9 @@ if reviewed?(reviews, comments, lastCommit)
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
   #end
 else
-  missings = missing_reviewers reviews, lastCommit
+  miss = client.pull_request_review_requests repo, pull_id 
+  missings = miss.users.map {|p| p.login}
+  missings = missing_reviewers missings, reviews, lastCommit
   exit(0) if missings.empty?
   missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
 end
