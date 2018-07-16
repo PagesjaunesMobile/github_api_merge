@@ -6,7 +6,7 @@ require 'octokit'
 # --------------------------
 
 @this_script_path = File.expand_path(File.dirname(__FILE__))
-
+DISMISS_APPROVALS_FEATURE = false
 # --------------------------
 # --- Functions
 # --------------------------
@@ -62,6 +62,7 @@ def reviewers reviews, last
 end
 
 def last_commit commits
+  return commits.map {|x| x.commit.author.date}.min unless DISMISS_APPROVALS_FEATURE
    commits.map {|x| x.commit.author.date}.max
 end
  
@@ -83,8 +84,10 @@ def missing_reviewers missing, reviews, last
   missing
 end
 
-def inWIP title
-  if title.downcase.include? "wip"
+def inWIP pr
+  labels = pr.labels.map {|l| l.name}
+  labels.push pr.title
+  if labels.any? { |l| l.downcase.include? "wip"}
     log_info "Abort : WIP mode detected"
     exit(0)
   end
@@ -115,7 +118,7 @@ log_info "reviewed :#{ reviewed? reviews, comments, lastCommit}"
 log_info "reviewers:#{reviewers(reviews, lastCommit)}"
 options = {}
 pr = client.pull_request repo, pull_id
-inWIP(pr.title)
+inWIP(pr)
 
 if reviewedComments? comments, lastCommit
 
