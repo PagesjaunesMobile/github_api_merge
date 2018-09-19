@@ -84,11 +84,12 @@ def missing_reviewers missing, reviews, last
   missing
 end
 
-def inWIP pr
+def inWIP pr, changelog
   labels = pr.labels.map {|l| l.name}
   labels.push pr.title
+  labels.push changelog =~ /## non conforme/ ? "WIP" : changelog
   if labels.any? { |l| l.downcase.include? "wip"}
-    log_info "Abort : WIP mode detected"
+    log_warn "Abort : WIP mode detected"
     exit(0)
   end
 end
@@ -101,6 +102,7 @@ repo_base = matches[1]
 repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
 pull_id = ENV["PULL_REQUEST_ID"]
 authorization_token = ENV["auth_token"]
+changelog = ENV["CHANGELOG"]
 
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
 log_fail "No pull request specified" if pull_id.to_s.empty?
@@ -118,7 +120,7 @@ log_info "reviewed :#{ reviewed? reviews, comments, lastCommit}"
 log_info "reviewers:#{reviewers(reviews, lastCommit)}"
 options = {}
 pr = client.pull_request repo, pull_id
-inWIP(pr)
+inWIP(pr, changelog)
 
 if reviewedComments? comments, lastCommit
 
