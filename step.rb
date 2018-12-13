@@ -139,7 +139,8 @@ if reviewed?(reviews, comments, lastCommit)
   if dest == "release" && resultMerge.merged?
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
+    report = client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "#{changelog}"
+    client.add_comment repo, report["number"], "code review OK"
   end
   # rescue Octokit::MethodNotAllowed
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
