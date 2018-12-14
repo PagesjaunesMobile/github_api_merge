@@ -87,7 +87,7 @@ end
 def inWIP pr, changelog
   labels = pr.labels.map {|l| l.name}
   labels.push pr.title
-  labels.push changelog =~ /## non conforme/ ? "WIP" : changelog
+  labels.push changelog =~ /## non conforme/ ? changelog : changelog
   if labels.any? { |l| l.downcase.include? "wip"}
     log_warn "Abort : WIP mode detected"
     exit(0)
@@ -141,7 +141,8 @@ if reviewed?(reviews, comments, lastCommit)
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
     report = client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "#{changelog}"
     log_info "report: #{report["number"]}"
-    log_info(client.add_comment(repo, report["number"], "code review OK"))
+    log_info(client.add_comment(repo, report["number"], "code review OK").inspect)
+    log_info(client.issue_comments(repo, report["number"]).inspect) 
   end
   # rescue Octokit::MethodNotAllowed
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
