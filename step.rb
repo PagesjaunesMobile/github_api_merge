@@ -111,6 +111,7 @@ client = Octokit::Client.new access_token:authorization_token
 pr = client.pull_request repo, pull_id
 @author = pr.user.login 
 issue = client.issue repo , pull_id
+comments = client.issue_comments repo , pull_id
 comments.push(pr) if comments.empty?
 comments.push issue.body
 
