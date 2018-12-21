@@ -110,8 +110,9 @@ log_fail "No pull request specified" if pull_id.to_s.empty?
 client = Octokit::Client.new access_token:authorization_token
 pr = client.pull_request repo, pull_id
 @author = pr.user.login 
-comments = client.issue_comments repo , pull_id
+issue = client.issue repo , pull_id
 comments.push(pr) if comments.empty?
+comments.push issue.body
 
 commits = client.pull_request_commits repo, pull_id
 lastCommit = last_commit(commits)
@@ -139,10 +140,8 @@ if reviewed?(reviews, comments, lastCommit)
   if dest == "release" && resultMerge.merged?
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    report = client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "#{changelog}"
-    log_info "report: #{report["number"]}"
-    log_info(client.add_comment(repo, report["number"], "code review OK").inspect)
-    log_info(client.issue_comments(repo, report["number"]).inspect) 
+    client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
+
   end
   # rescue Octokit::MethodNotAllowed
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
