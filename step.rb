@@ -1,5 +1,13 @@
 require 'octokit'
 
+class Comments_light
+  attr_reader :body, :updated_at
+  
+  def initialize(body: '', updated_at: '')
+    @body = body
+    @updated_at = updated_at
+  end
+end  
 
 # --------------------------
 # --- Constants & Variables
@@ -113,7 +121,7 @@ pr = client.pull_request repo, pull_id
 issue = client.issue repo , pull_id
 comments = client.issue_comments repo , pull_id
 comments.push(pr) if comments.empty?
-comments.push issue.body
+comments.push Comments_light.new(body: issue.body, updated_at: issue.updated_at)
 
 commits = client.pull_request_commits repo, pull_id
 lastCommit = last_commit(commits)
