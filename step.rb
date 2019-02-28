@@ -55,7 +55,7 @@ def delete_branch? host
 end
  
 def reviewedComments? comments, last
-  comment = comments.one? {|p| (p.updated_at > last) && p.body.downcase.include?('code review ok') }
+  comment = comments.any? {|p| (p.updated_at > last) && p.body.downcase.include?('code review ok') }
 end
 
 def reviewers reviews, last
