@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set +e
 
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$THIS_SCRIPT_DIR/libs/messages.sh"
@@ -13,9 +13,10 @@ if [ -z "$auth_token" ]; then
 	exit 1
 fi
 
+cd $THIS_SCRIPT_DIR && gem install octokit
 msg_info "Installing Octokit"
 cd $THIS_SCRIPT_DIR && bundle install
-
+set -e
 msg_info "Executing script"
-bundle exec ruby "$THIS_SCRIPT_DIR/step.rb"
+ruby "$THIS_SCRIPT_DIR/step.rb"
 exit $?
