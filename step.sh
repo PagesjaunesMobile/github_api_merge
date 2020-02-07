@@ -15,7 +15,7 @@ fi
 
 cd $THIS_SCRIPT_DIR && gem install octokit
 msg_info "Installing Octokit"
-cd $THIS_SCRIPT_DIR && bundle install
+
 set -e
 msg_info "Executing script"
 ruby "$THIS_SCRIPT_DIR/step.rb"
