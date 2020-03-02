@@ -107,7 +107,7 @@ dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
 
 repo = ENV["BITRISEIO_GIT_REPOSITORY_OWNER"] +  "/" + ENV["BITRISEIO_GIT_REPOSITORY_SLUG"]
 pull_id = ENV["PULL_REQUEST_ID"]
-authorization_token = ENV["auth_token"]
+authorization_token = ENV["AUTH_TOKEN"]
 changelog = ENV["CHANGELOG"]
 
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
