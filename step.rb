@@ -104,10 +104,8 @@ end
 
 branch = ENV["BITRISE_GIT_BRANCH"]
 dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
-matches = /:([^\/]*)\//.match ENV["GIT_REPOSITORY_URL"]
 
-repo_base = matches[1]
-repo = repo_base +  "/" + ENV["BITRISE_APP_TITLE"]
+repo = ENV["BITRISEIO_GIT_REPOSITORY_OWNER"] +  "/" + ENV["BITRISEIO_GIT_REPOSITORY_SLUG"]
 pull_id = ENV["PULL_REQUEST_ID"]
 authorization_token = ENV["auth_token"]
 changelog = ENV["CHANGELOG"]
