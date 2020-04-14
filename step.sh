@@ -13,8 +13,8 @@ if [ -z "$auth_token" ]; then
 	exit 1
 fi
 
-cd $THIS_SCRIPT_DIR && gem install octokit
-msg_info "Installing Octokit"
+cd $THIS_SCRIPT_DIR && gem install gitlab
+msg_info "Installing api client"
 
 set -e
 msg_info "Executing script"

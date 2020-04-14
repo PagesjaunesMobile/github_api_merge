@@ -1,3 +1,3 @@
 source 'https://rubygems.org'
 
-gem 'octokit', '~> 4.9'
+gem 'gitlab'

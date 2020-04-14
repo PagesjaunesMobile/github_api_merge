@@ -1,4 +1,5 @@
-require 'octokit'
+require 'gitlab'
+
 
 class Comments_light
   attr_reader :body, :updated_at
@@ -70,14 +71,13 @@ def reviewers reviews, last
 end
 
 def last_commit commits
-  return commits.map {|x| x.commit.author.date}.min unless DISMISS_APPROVALS_FEATURE
-   commits.map {|x| x.commit.author.date}.max
+  return commits.map {|x| x.committed_date}.min unless DISMISS_APPROVALS_FEATURE
+   commits.map {|x| x.committed_date}.max
 end
  
 def reviewed? reviews, comments, last
-  revs = reviewers reviews, last
-  return reviewedComments?(comments, last) if revs.empty?
-  revs.values.all?{|r| r}
+  return true if reviews.approved == true
+  return reviewedComments?(comments, last)
 end
 
 def missing_reviewers missing, reviews, last
@@ -93,19 +93,19 @@ def missing_reviewers missing, reviews, last
 end
 
 def inWIP pr, changelog
-  labels = pr.labels.map {|l| l.name}
+  labels = pr.labels.map {|l| l.name}.reject(&:blank?)
   labels.push pr.title
-  labels.push changelog =~ /## non conforme/ ? changelog : changelog
   if labels.any? { |l| l.downcase.include? "wip"}
     log_warn "Abort : WIP mode detected"
     exit(0)
   end
 end
 
+
 branch = ENV["BITRISE_GIT_BRANCH"]
 dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
-repo_base = ENV["BITRISEIO_GIT_REPOSITORY_SLUG"]
-repo = ENV["BITRISEIO_GIT_REPOSITORY_OWNER"] +  "/#{repo_base}"
+repo_base = ENV["GIT_REPOSITORY_URL"]
+repo = repo_base[/:(.*).git/, 1]
 pull_id = ENV["PULL_REQUEST_ID"]
 authorization_token = ENV["AUTH_TOKEN"]
 changelog = ENV["CHANGELOG"]
@@ -113,21 +113,20 @@ changelog = ENV["CHANGELOG"]
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
 log_fail "No pull request specified" if pull_id.to_s.empty?
 
-client = Octokit::Client.new access_token:authorization_token
-pr = client.pull_request repo, pull_id
-@author = pr.user.login 
-issue = client.issue repo , pull_id
-comments = client.issue_comments repo , pull_id
-comments.push(pr) if comments.empty?
-comments.push Comments_light.new(body: issue.body, updated_at: issue.updated_at)
+client = Gitlab.client(
+  endpoint: 'https://gitlab.solocal.com/api/v4',
+  private_token: authorization_token )
+pr = client.merge_request repo, pull_id
 
-commits = client.pull_request_commits repo, pull_id
+@author = pr.author.username 
+comments = client.merge_request_notes repo , pull_id
+
+commits = client.merge_request_commits repo, pull_id
 lastCommit = last_commit(commits)
-reviews = client.pull_request_reviews repo, pull_id
+reviews = client.merge_request_approvals repo, pull_id
 log_info "reviewed :#{ reviewed? reviews, comments, lastCommit}"
-log_info "reviewers:#{reviewers(reviews, lastCommit)}"
 options = {}
-pr = client.pull_request repo, pull_id
+pr = client.merge_request repo, pull_id
 inWIP(pr, changelog)
 
 if reviewedComments? comments, lastCommit
@@ -138,27 +137,27 @@ end
 if reviewed?(reviews, comments, lastCommit)
   #begin
   log_details "#{repo}, #{pull_id}  #{options}"
-  resultMerge = client.merge_pull_request repo, pull_id ,'', options
+  resultMerge = client.accept_merge_request repo, pull_id
   log_done "#{branch} merged #{options[:merge_method]}"
   export_output "BITRISE_AUTO_MERGE", "True"
   log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_branch repo, branch if delete_branch? repo_base
+  client.delete_branch repo, branch 
   log_info("#{dest} => #{resultMerge.merge}")
   if dest == "release" && resultMerge.merged?
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    client.create_pull_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
+    client.create_merge_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
 
   end
   # rescue Octokit::MethodNotAllowed
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
   #end
-else
-  miss = client.pull_request_review_requests repo, pull_id 
-  missings = miss.users.map {|p| p.login}
-  missings = missing_reviewers missings, reviews, lastCommit
-  exit(0) if missings.empty?
-  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
+  #else
+#  miss = client.merge_request_review_requests repo, pull_id 
+#  missings = miss.users.map {|p| p.login}
+#  missings = missing_reviewers missings, reviews, lastCommit
+#  exit(0) if missings.empty?
+#  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
 end
 
 log_done "done"
