@@ -101,63 +101,26 @@ def inWIP pr, changelog
   end
 end
 
+log_info "init PR"
 
 branch = ENV["BITRISE_GIT_BRANCH"]
 dest = ENV["BITRISEIO_GIT_BRANCH_DEST"]
 repo_base = ENV["GIT_REPOSITORY_URL"]
 repo = repo_base[/:(.*).git/, 1]
-pull_id = ENV["PULL_REQUEST_ID"]
 authorization_token = ENV["AUTH_TOKEN"]
 changelog = ENV["CHANGELOG"]
 
+log_fail "No branch source specified" if branch.to_s.empty?
+log_fail "No branch dest specified" if dest.to_s.empty?
 log_fail "No authorization_token specified" if authorization_token.to_s.empty?
-log_fail "No pull request specified" if pull_id.to_s.empty?
 
 client = Gitlab.client(
   endpoint: 'https://gitlab.solocal.com/api/v4',
   private_token: authorization_token )
-pr = client.merge_request repo, pull_id
-
-@author = pr.author.username 
-comments = client.merge_request_notes repo , pull_id
-
-commits = client.merge_request_commits repo, pull_id
-lastCommit = last_commit(commits)
-reviews = client.merge_request_approvals repo, pull_id
-log_info "reviewed :#{ reviewed? reviews, comments, lastCommit}"
-options = {}
-pr = client.merge_request repo, pull_id
-inWIP(pr, changelog)
-
-if reviewedComments? comments, lastCommit
-
-  options[:merge_method] = "rebase" if pr.title.include? "bump version" 
 end
-  
-if reviewed?(reviews, comments, lastCommit)
-  #begin
-  log_details "#{repo}, #{pull_id}  #{options}"
-  resultMerge = client.accept_merge_request repo, pull_id
-  log_done "#{branch} merged #{options[:merge_method]}"
-  export_output "BITRISE_AUTO_MERGE", "True"
-  log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_branch repo, branch 
-  log_info("#{dest} => #{resultMerge.merge}")
-  if dest == "release" && resultMerge.merged?
-    new_branch = "feat/reportRelease"
-    client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    client.create_merge_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
 
-  end
-  # rescue Octokit::MethodNotAllowed
-  #  client.merge repo, branch, dest, :merge_method => "rebase" 
-  #end
-  #else
-#  miss = client.merge_request_review_requests repo, pull_id 
-#  missings = miss.users.map {|p| p.login}
-#  missings = missing_reviewers missings, reviews, lastCommit
-#  exit(0) if missings.empty?
-#  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
-end
+pr = client.create_merge_request repo, "bump version", {source_branch: branch, target_branch: dest}
+log_fail "Pull request error" if pr.nil?
+client.create_merge_request_note repo, pr.iid, "code review OK"
 
 log_done "done"
