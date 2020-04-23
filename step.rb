@@ -76,7 +76,7 @@ def last_commit commits
 end
  
 def reviewed? reviews, comments, last
-  return true if reviews.approved == true
+  return true if reviews.approved_by.size > 0
   return reviewedComments?(comments, last)
 end
 
