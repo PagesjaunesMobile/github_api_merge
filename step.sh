@@ -5,7 +5,7 @@ set +e
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$THIS_SCRIPT_DIR/libs/messages.sh"
 
-msg_info "auth_token: $auth_token"
+msg_info "auth_token: $AUTH_TOKEN"
 msg_info "delete_branch: $delete_branch"
 
 if [ -z "$auth_token" ]; then
