@@ -137,11 +137,11 @@ end
 if reviewed?(reviews, comments, lastCommit)
   #begin
   log_details "#{repo}, #{pull_id}  #{options}"
-  resultMerge = client.accept_merge_request repo, pull_id
+  resultMerge = client.accept_merge_request repo, pull_id, { merge_when_pipeline_succeeds: true }
   log_done "#{branch} merged #{options[:merge_method]}"
   export_output "BITRISE_AUTO_MERGE", "True"
   log_info "deleted :#{delete_branch? repo_base}"
-  client.delete_branch repo, branch 
+#  client.delete_branch repo, branch 
   if dest == "release" && resultMerge.merged?
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
