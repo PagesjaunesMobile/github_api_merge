@@ -1,5 +1,14 @@
 require 'gitlab'
 
+class Gitlab::Client
+  module MergeRequests
+    def rebase(project, id, options = {})
+      log_done "rebase MR #{id}"
+      put("/projects/#{url_encode project}/merge_requests/#{id}/rebase", body: {})
+    end
+  end
+end
+
 
 class Comments_light
   attr_reader :body, :updated_at
@@ -148,6 +157,14 @@ if reviewed?(reviews, comments, lastCommit)
     client.create_merge_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
 
   end
+  
+  nextMR = client.merge_requests(repo, {state: "opened", approved_by_ids: "Any"}) 
+  begin
+    client.rebase repo, nextMR.first.iid
+  rescue => ex
+    log_done "Nothing left to do ...#{ex}"
+  end
+  
   # rescue Octokit::MethodNotAllowed
   #  client.merge repo, branch, dest, :merge_method => "rebase" 
   #end
