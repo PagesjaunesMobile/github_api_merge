@@ -154,7 +154,7 @@ if reviewed?(reviews, comments, lastCommit)
   if dest == "release" && resultMerge.merged?
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
-    client.create_merge_request repo, "develop", new_branch, "chore(fix): report fixes", "code review OK"
+    client.create_merge_request repo, "chore(fix): report fixes", { source_branch: new_branch, target_branch: 'develop', description: "code review OK", approvals_before_merge: 0}
 
   end
   
