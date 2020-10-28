@@ -151,7 +151,7 @@ if reviewed?(reviews, comments, lastCommit)
   export_output "BITRISE_AUTO_MERGE", "True"
   log_info "deleted :#{delete_branch? repo_base}"
 #  client.delete_branch repo, branch 
-  if dest == "release" && resultMerge.merged?
+  if dest == "release" && resultMerge.state == "merged"
     new_branch = "feat/reportRelease"
     client.create_ref repo, "heads/#{new_branch}", resultMerge.sha
     client.create_merge_request repo, "chore(fix): report fixes", { source_branch: new_branch, target_branch: 'develop', description: "code review OK", approvals_before_merge: 0}
