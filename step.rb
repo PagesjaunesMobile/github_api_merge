@@ -161,7 +161,7 @@ if reviewed?(reviews, comments, lastCommit)
   nextMR = client.merge_requests(repo, {state: "opened", approved_by_ids: "Any"}) 
   begin
     log_info "pull #{pull_id}  ->  #{nextMR.find { |item| item.iid != pull_id}.iid}"
-    client.rebase repo, nextMR.find { |item| item.iid != pull_id }.iid
+  #  client.rebase repo, nextMR.find { |item| item.iid != pull_id }.iid
   rescue => ex
     log_done "Nothing left to do ...#{ex}"
   end
