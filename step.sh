@@ -17,6 +17,7 @@ cd $THIS_SCRIPT_DIR && gem install gitlab
 msg_info "Installing api client"
 
 set -e
+ruby -v
 msg_info "Executing script"
 ruby "$THIS_SCRIPT_DIR/step.rb"
 exit $?
