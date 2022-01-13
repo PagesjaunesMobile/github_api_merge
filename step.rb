@@ -161,8 +161,12 @@ end
   
   nextMR = client.merge_requests(repo, {state: "opened", approved_by_ids: "Any"}) 
   begin
-    log_info "pull #{pull_id}  ->  #{nextMR.select { |item| item.iid != pull_id}.iid}"
-  #  client.rebase repo, nextMR.find { |item| item.iid != pull_id }.iid
+    next_mr = nextMR.select { |item| item.iid != pull_id}.first}
+  
+    log_info "pull #{pull_id}  ->  #{next_mr.iid}"
+    if( !next_mr.nil? && next_mr != pull_id)
+      client.rebase repo, next_mr.iid
+    end
   rescue => ex
     log_done "Nothing left to do ...#{ex}"
   end
