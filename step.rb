@@ -157,24 +157,16 @@ if reviewed?(reviews, comments, lastCommit)
     client.create_merge_request repo, "chore(fix): report fixes", { source_branch: new_branch, target_branch: 'develop', description: "code review OK", approvals_before_merge: 0}
 
   end
+end
   
   nextMR = client.merge_requests(repo, {state: "opened", approved_by_ids: "Any"}) 
   begin
-    log_info "pull #{pull_id}  ->  #{nextMR.find { |item| item.iid != pull_id}.iid}"
+    log_info "pull #{pull_id}  ->  #{nextMR.select { |item| item.iid != pull_id}.iid}"
   #  client.rebase repo, nextMR.find { |item| item.iid != pull_id }.iid
   rescue => ex
     log_done "Nothing left to do ...#{ex}"
   end
-  
-  # rescue Octokit::MethodNotAllowed
-  #  client.merge repo, branch, dest, :merge_method => "rebase" 
-  #end
-  #else
-#  miss = client.merge_request_review_requests repo, pull_id 
-#  missings = miss.users.map {|p| p.login}
-#  missings = missing_reviewers missings, reviews, lastCommit
-#  exit(0) if missings.empty?
-#  missings.each {|m| client.add_comment repo, pull_id, "manque l'approbation de @#{m}"}
-end
+
+
 
 log_done "done"
